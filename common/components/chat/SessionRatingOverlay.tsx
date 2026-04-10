@@ -69,26 +69,26 @@ const styles = StyleSheet.create({
   },
   blurLayer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(250, 245, 238, 0.74)',
+    backgroundColor: 'rgba(8, 20, 52, 0.72)',
   },
   overlayCard: {
     width: '86%',
     borderRadius: 18,
     padding: 18,
-    backgroundColor: 'rgba(255,255,255,0.93)',
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: 'rgba(96, 165, 250, 0.45)',
   },
   overlayTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
+    color: '#e2e8f0',
     textAlign: 'center',
   },
   overlaySubtitle: {
     marginTop: 6,
     fontSize: 14,
-    color: '#4b5563',
+    color: '#bfdbfe',
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     color: '#f59e0b',
   },
   starInactive: {
-    color: '#d1d5db',
+    color: '#475569',
   },
   overlayActions: {
     marginTop: 18,
@@ -117,20 +117,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
   },
   overlaySecondaryText: {
-    color: '#374151',
+    color: '#cbd5e1',
     fontWeight: '600',
   },
   overlayPrimaryButton: {
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 10,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#92400e',
   },
   overlayPrimaryButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: '#c2410c',
+    opacity: 0.55,
   },
   overlayPrimaryText: {
     color: '#ffffff',
