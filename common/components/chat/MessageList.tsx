@@ -8,6 +8,8 @@ type Props = {
   messageById: Map<string, ChatMessage>;
   reactions: Record<string, string>;
   aiFeedback: Record<string, AiFeedbackState>;
+  openReactionMessageId: string | null;
+  onOpenReaction: (messageId: string | null) => void;
   onReply: (message: ChatMessage) => void;
   onReact: (messageId: string, emoji: string) => void;
   onToggleAiVote: (messageId: string, vote: 'like' | 'dislike') => void;
@@ -18,6 +20,8 @@ export function MessageList({
   messageById,
   reactions,
   aiFeedback,
+  openReactionMessageId,
+  onOpenReaction,
   onReply,
   onReact,
   onToggleAiVote,
@@ -28,6 +32,9 @@ export function MessageList({
       data={CHAT_MESSAGES}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
+      keyboardShouldPersistTaps="handled"
+      scrollEnabled={!openReactionMessageId}
+      onScrollBeginDrag={() => onOpenReaction(null)}
       renderItem={({ item }) => {
         const replyMessage = item.replyTo ? messageById.get(item.replyTo) : undefined;
         const replyPreview = replyMessage?.text;
@@ -37,6 +44,9 @@ export function MessageList({
             replyPreview={replyPreview}
             reaction={reactions[item.id]}
             aiFeedback={aiFeedback[item.id]}
+            isReactionBarOpen={openReactionMessageId === item.id}
+            onOpenReactionBar={() => onOpenReaction(item.id)}
+            onCloseReactionBar={() => onOpenReaction(null)}
             onReply={onReply}
             onReact={onReact}
             onToggleAiVote={onToggleAiVote}

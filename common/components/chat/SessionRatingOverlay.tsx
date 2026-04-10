@@ -1,4 +1,3 @@
-import { BlurView } from 'expo-blur';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
@@ -22,7 +21,7 @@ export function SessionRatingOverlay({
 
   return (
     <View style={styles.overlayRoot}>
-      <BlurView intensity={55} tint="light" style={styles.blurLayer} />
+      <View style={styles.blurLayer} />
 
       <View style={styles.overlayCard}>
         <Text style={styles.overlayTitle}>Thank You</Text>
@@ -70,6 +69,7 @@ const styles = StyleSheet.create({
   },
   blurLayer: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(250, 245, 238, 0.74)',
   },
   overlayCard: {
     width: '86%',

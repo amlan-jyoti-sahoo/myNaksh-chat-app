@@ -5,7 +5,7 @@ type Props = {
   onStartChat: () => void;
 };
 
-const BACKGROUND_IMAGE = require('../common/assets/horoscope-background.png');
+const BACKGROUND_IMAGE = require('../../common/assets/horoscope-background.png');
 
 export default function StartChatScreen({ astrologerName, onStartChat }: Props) {
   return (

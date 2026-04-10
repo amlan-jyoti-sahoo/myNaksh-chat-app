@@ -1,4 +1,5 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect } from 'react';
+import { Reply } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -21,6 +22,9 @@ type Props = {
   onReact: (messageId: string, emoji: string) => void;
   onToggleAiVote: (messageId: string, vote: 'like' | 'dislike') => void;
   onSelectAiReason: (messageId: string, reason: string) => void;
+  isReactionBarOpen: boolean;
+  onOpenReactionBar: () => void;
+  onCloseReactionBar: () => void;
 };
 
 const MAX_SWIPE = 84;
@@ -37,6 +41,9 @@ function SwipeReplyMessageBase({
   onReact,
   onToggleAiVote,
   onSelectAiReason,
+  isReactionBarOpen,
+  onOpenReactionBar,
+  onCloseReactionBar,
 }: Props) {
   const canReply = message.type !== 'event';
   const isUser = message.sender === 'user';
@@ -44,13 +51,12 @@ function SwipeReplyMessageBase({
   const translateX = useSharedValue(0);
   const reactionBarProgress = useSharedValue(0);
   const chipProgress = useSharedValue(0);
-  const [isReactionBarVisible, setIsReactionBarVisible] = useState(false);
 
   useEffect(() => {
-    reactionBarProgress.value = withTiming(isReactionBarVisible ? 1 : 0, {
-      duration: isReactionBarVisible ? 170 : 130,
+    reactionBarProgress.value = withTiming(isReactionBarOpen ? 1 : 0, {
+      duration: isReactionBarOpen ? 220 : 180,
     });
-  }, [isReactionBarVisible, reactionBarProgress]);
+  }, [isReactionBarOpen, reactionBarProgress]);
 
   useEffect(() => {
     chipProgress.value = withTiming(aiFeedback?.vote === 'dislike' ? 1 : 0, {
@@ -87,10 +93,17 @@ function SwipeReplyMessageBase({
   const longPress = Gesture.LongPress()
     .minDuration(220)
     .onStart(() => {
-      runOnJS(setIsReactionBarVisible)(true);
+      runOnJS(onOpenReactionBar)();
     });
 
-  const composedGesture = Gesture.Simultaneous(pan, longPress);
+  const tap = Gesture.Tap()
+    .onStart(() => {
+      if (isReactionBarOpen) {
+        runOnJS(onCloseReactionBar)();
+      }
+    });
+
+  const composedGesture = Gesture.Simultaneous(pan, longPress, tap);
 
   const animatedBubble = useAnimatedStyle(() => {
     return {
@@ -109,8 +122,8 @@ function SwipeReplyMessageBase({
     return {
       opacity: reactionBarProgress.value,
       transform: [
-        { translateY: interpolate(reactionBarProgress.value, [0, 1], [8, 0]) },
-        { scale: interpolate(reactionBarProgress.value, [0, 1], [0.95, 1]) },
+        { translateY: interpolate(reactionBarProgress.value, [0, 1], [12, 0]) },
+        { scale: interpolate(reactionBarProgress.value, [0, 1], [0.85, 1]) },
       ],
     };
   });
@@ -127,10 +140,10 @@ function SwipeReplyMessageBase({
   return (
     <View style={[styles.wrapper, isUser ? styles.rightAlign : styles.leftAlign]}>
       <Animated.View style={[styles.replyIconWrap, animatedReplyIcon]}>
-        <Text style={styles.replyIcon}>↩</Text>
+        <Reply size={14} color="#ffffff" strokeWidth={2.25} />
       </Animated.View>
 
-      {isReactionBarVisible ? (
+      {isReactionBarOpen ? (
         <Animated.View
           style={[
             styles.reactionBar,
@@ -144,7 +157,7 @@ function SwipeReplyMessageBase({
               style={styles.reactionOption}
               onPress={() => {
                 onReact(message.id, emoji);
-                setIsReactionBarVisible(false);
+                onCloseReactionBar();
               }}
             >
               <Text style={styles.reactionOptionText}>{emoji}</Text>
@@ -278,35 +291,31 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 10,
     top: 10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#f4efe3',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(17, 24, 39, 0.7)',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 0,
   },
-  replyIcon: {
-    fontSize: 14,
-    color: '#7a4f11',
-  },
   reactionBar: {
     position: 'absolute',
-    top: -42,
+    top: -48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#ffffff',
-    borderRadius: 999,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     shadowColor: '#0f172a',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
     zIndex: 3,
   },
   reactionBarLeft: {
@@ -316,9 +325,9 @@ const styles = StyleSheet.create({
     right: 0,
   },
   reactionOption: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f8fafc',

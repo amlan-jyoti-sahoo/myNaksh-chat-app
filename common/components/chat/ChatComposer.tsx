@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Props = {
@@ -5,9 +6,20 @@ type Props = {
   onDraftChange: (value: string) => void;
   replyingToText?: string;
   onCancelReply: () => void;
+  onSend?: () => void;
+  onInputFocus?: () => void;
 };
 
-export function ChatComposer({ draft, onDraftChange, replyingToText, onCancelReply }: Props) {
+export function ChatComposer({
+  draft,
+  onDraftChange,
+  replyingToText,
+  onCancelReply,
+  onSend,
+  onInputFocus,
+}: Props) {
+  const isDisabled = draft.trim().length === 0;
+
   return (
     <View style={styles.composerArea}>
       {replyingToText ? (
@@ -25,17 +37,29 @@ export function ChatComposer({ draft, onDraftChange, replyingToText, onCancelRep
         </View>
       ) : null}
 
-      <View style={styles.inputRow}>
+      <View style={styles.inputShell}>
         <TextInput
-          placeholder="Type your message"
+          placeholder="Type a message"
           value={draft}
           onChangeText={onDraftChange}
+          onFocus={onInputFocus}
           style={styles.input}
-          placeholderTextColor="#6b7280"
+          placeholderTextColor="#a0a0a0"
+          multiline
+          // maxHeight={100}
         />
 
-        <Pressable style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>Send</Text>
+        <Pressable
+          style={isDisabled ? styles.sendButtonDisabled : styles.sendButton}
+          disabled={isDisabled}
+          onPress={onSend}
+        >
+          <Ionicons
+            name="send"
+            size={isDisabled ? 22 : 16}
+            color={isDisabled ? 'grey' : '#ffffff'}
+            style={styles.sendIcon}
+          />
         </Pressable>
       </View>
     </View>
@@ -80,30 +104,55 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  inputRow: {
+  inputShell: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#d4cfc7',
+    borderRadius: 16,
+    backgroundColor: '#faf8f6',
+    paddingLeft: 16,
+    paddingRight: 8,
+    justifyContent:'center',
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingRight: 10,
+    paddingVertical: 8,
     color: '#111827',
     fontSize: 15,
+    backgroundColor: 'transparent',
+    // minHeight: 44,
   },
   sendButton: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: '#8b5a3c',
+    borderRadius: 12,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  sendButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
+  sendButtonDisabled: {
+    // backgroundColor: '#8b5a3c',
+    borderRadius: 12,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0f172a',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  sendIcon: {
+    marginLeft: 2,
   },
 });
