@@ -3,8 +3,10 @@ import { CheckCheck, Reply } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  Extrapolation,
   interpolate,
   runOnJS,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -32,6 +34,57 @@ const REPLY_TRIGGER = 52;
 const REACTION_EMOJIS = ['🙏', '✨', '🌙', '🔮', '💫'];
 const DISLIKE_CHIPS = ['Inaccurate', 'Too Vague', 'Too Long'];
 
+type ReactionOptionProps = {
+  messageId: string;
+  emoji: string;
+  index: number;
+  progress: SharedValue<number>;
+  onReact: (messageId: string, emoji: string) => void;
+  onCloseReactionBar: () => void;
+};
+
+function ReactionOption({
+  messageId,
+  emoji,
+  index,
+  progress,
+  onReact,
+  onCloseReactionBar,
+}: ReactionOptionProps) {
+  const animatedOption = useAnimatedStyle(() => {
+    const start = index * 0.12;
+    const localProgress = interpolate(
+      progress.value,
+      [start, start + 0.56],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity: localProgress,
+      transform: [
+        { translateX: interpolate(localProgress, [0, 1], [-12, 0]) },
+        { scale: interpolate(localProgress, [0, 1], [0.86, 1]) },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View style={animatedOption}>
+      <Pressable
+        style={styles.reactionOption}
+        onPress={() => {
+          onReact(messageId, emoji);
+          onCloseReactionBar();
+        }}
+        android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
+      >
+        <Text style={styles.reactionOptionText}>{emoji}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 function SwipeReplyMessageBase({
   message,
   replyPreview,
@@ -55,7 +108,7 @@ function SwipeReplyMessageBase({
 
   useEffect(() => {
     reactionBarProgress.value = withTiming(isReactionBarOpen ? 1 : 0, {
-      duration: isReactionBarOpen ? 220 : 180,
+      duration: isReactionBarOpen ? 320 : 240,
     });
   }, [isReactionBarOpen, reactionBarProgress]);
 
@@ -150,9 +203,11 @@ function SwipeReplyMessageBase({
   const animatedReactionBar = useAnimatedStyle(() => {
     return {
       opacity: reactionBarProgress.value,
+      maxWidth: interpolate(reactionBarProgress.value, [0, 1], [42, 240]),
       transform: [
+        { translateX: interpolate(reactionBarProgress.value, [0, 1], [-18, 0]) },
         { translateY: interpolate(reactionBarProgress.value, [0, 1], [12, 0]) },
-        { scale: interpolate(reactionBarProgress.value, [0, 1], [0.85, 1]) },
+        { scale: interpolate(reactionBarProgress.value, [0, 1], [0.92, 1]) },
       ],
     };
   });
@@ -187,18 +242,16 @@ function SwipeReplyMessageBase({
           ]}
           pointerEvents="box-none"
         >
-          {REACTION_EMOJIS.map((emoji) => (
-            <Pressable
+          {REACTION_EMOJIS.map((emoji, index) => (
+            <ReactionOption
               key={`${message.id}-${emoji}`}
-              style={styles.reactionOption}
-              onPress={() => {
-                onReact(message.id, emoji);
-                onCloseReactionBar();
-              }}
-              android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
-            >
-              <Text style={styles.reactionOptionText}>{emoji}</Text>
-            </Pressable>
+              messageId={message.id}
+              emoji={emoji}
+              index={index}
+              progress={reactionBarProgress}
+              onReact={onReact}
+              onCloseReactionBar={onCloseReactionBar}
+            />
           ))}
         </Animated.View>
       )}
