@@ -1,5 +1,5 @@
 import { memo, useEffect } from 'react';
-import { Reply } from 'lucide-react-native';
+import { CheckCheck, Reply } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -197,7 +197,7 @@ function SwipeReplyMessageBase({
                   hour12: true,
                 })}
               </Text>
-              {isUser ? <Text style={styles.checkMark}>✓✓</Text> : null}
+              {isUser ? <CheckCheck size={14} color="#3b82f6" strokeWidth={2.2} /> : null}
             </View>
           ) : null}
 
@@ -370,10 +370,6 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 12,
     color: '#9ca3af',
-  },
-  checkMark: {
-    fontSize: 11,
-    color: '#60a5fa',
   },
   eventText: {
     textAlign: 'center',

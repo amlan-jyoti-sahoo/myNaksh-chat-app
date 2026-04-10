@@ -31,9 +31,6 @@ export function ChatHeader({ astrologerName, onEndChat }: Props) {
         </View>
       </View>
       <View style={styles.headerRight}>
-        <Pressable style={styles.iconButton}>
-          <Text style={styles.iconButtonText}>+</Text>
-        </Pressable>
         <Pressable style={styles.endChatButton} onPress={onEndChat}>
           <Text style={styles.endChatText}>End</Text>
         </Pressable>
@@ -108,22 +105,8 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconButtonText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#6b7280',
   },
   endChatButton: {
     borderRadius: 6,

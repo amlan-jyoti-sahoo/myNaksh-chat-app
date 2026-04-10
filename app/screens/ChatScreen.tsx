@@ -53,6 +53,12 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
         <KeyboardAvoidingView
           style={styles.keyboardWrap}
           behavior={Platform.select({ ios: 'padding', android: undefined })}
+          onStartShouldSetResponderCapture={() => {
+            if (openReactionMessageId) {
+              setOpenReactionMessageId(null);
+            }
+            return false;
+          }}
         >
           <ChatHeader
             astrologerName={astrologerName}
