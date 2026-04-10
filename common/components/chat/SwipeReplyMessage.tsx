@@ -38,6 +38,7 @@ type ReactionOptionProps = {
   messageId: string;
   emoji: string;
   index: number;
+  isSelected: boolean;
   progress: SharedValue<number>;
   onReact: (messageId: string, emoji: string) => void;
   onCloseReactionBar: () => void;
@@ -47,6 +48,7 @@ function ReactionOption({
   messageId,
   emoji,
   index,
+  isSelected,
   progress,
   onReact,
   onCloseReactionBar,
@@ -72,7 +74,7 @@ function ReactionOption({
   return (
     <Animated.View style={animatedOption}>
       <Pressable
-        style={styles.reactionOption}
+        style={[styles.reactionOption, isSelected && styles.reactionOptionSelected]}
         onPress={() => {
           onReact(messageId, emoji);
           onCloseReactionBar();
@@ -248,6 +250,7 @@ function SwipeReplyMessageBase({
               messageId={message.id}
               emoji={emoji}
               index={index}
+              isSelected={reaction === emoji}
               progress={reactionBarProgress}
               onReact={onReact}
               onCloseReactionBar={onCloseReactionBar}
@@ -429,6 +432,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f8fafc',
+  },
+  reactionOptionSelected: {
+    backgroundColor: '#dfdac5',
+    // shadowColor: '#7a6f41',
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
   reactionOptionText: {
     fontSize: 18,
