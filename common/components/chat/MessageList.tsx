@@ -52,7 +52,6 @@ export function MessageList({
       keyboardShouldPersistTaps="handled"
       scrollEnabled={!openReactionMessageId}
       onScrollBeginDrag={() => onOpenReaction(null)}
-      onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       renderItem={({ item }) => {
         const replyMessage = item.replyTo ? messageById.get(item.replyTo) : undefined;
         const replyPreview = replyMessage?.text;
