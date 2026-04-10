@@ -125,9 +125,7 @@ function SwipeReplyMessageBase({
   const tap = Gesture.Tap()
     .maxDuration(200)
     .onStart(() => {
-      if (isReactionBarOpen) {
-        runOnJS(onCloseReactionBar)();
-      }
+      runOnJS(onCloseReactionBar)();
     });
 
   // Use Race so that whichever gesture completes first takes priority
@@ -363,7 +361,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
-    zIndex: 3,
+    zIndex: 100,
   },
   reactionBarLeft: {
     left: 0,

@@ -71,7 +71,15 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
 
   return (
     <ImageBackground source={BACKGROUND_IMAGE} style={styles.background} resizeMode="cover">
-      <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+      <SafeAreaView
+        style={styles.root}
+        edges={['top', 'bottom']}
+        onTouchEnd={() => {
+          if (openReactionMessageId) {
+            setOpenReactionMessageId(null);
+          }
+        }}
+      >
         <KeyboardAvoidingView
           style={styles.keyboardWrap}
           behavior={Platform.select({ ios: 'padding', android: undefined })}
