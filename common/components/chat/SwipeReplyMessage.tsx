@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { CheckCheck, Reply } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -51,6 +51,7 @@ function SwipeReplyMessageBase({
   const translateX = useSharedValue(0);
   const reactionBarProgress = useSharedValue(0);
   const chipProgress = useSharedValue(0);
+  const [localAiFeedback, setLocalAiFeedback] = useState<AiFeedbackState>(aiFeedback ?? {});
 
   useEffect(() => {
     reactionBarProgress.value = withTiming(isReactionBarOpen ? 1 : 0, {
@@ -59,10 +60,35 @@ function SwipeReplyMessageBase({
   }, [isReactionBarOpen, reactionBarProgress]);
 
   useEffect(() => {
-    chipProgress.value = withTiming(aiFeedback?.vote === 'dislike' ? 1 : 0, {
+    const shouldShowChips = localAiFeedback.vote === 'dislike' && !localAiFeedback.reason;
+    chipProgress.value = withTiming(shouldShowChips ? 1 : 0, {
       duration: 170,
     });
-  }, [aiFeedback?.vote, chipProgress]);
+  }, [localAiFeedback.vote, localAiFeedback.reason, chipProgress]);
+
+  useEffect(() => {
+    setLocalAiFeedback(aiFeedback ?? {});
+  }, [aiFeedback?.vote, aiFeedback?.reason, message.id]);
+
+  const handleToggleAiVote = (vote: 'like' | 'dislike') => {
+    setLocalAiFeedback((prev) => {
+      const nextVote = prev.vote === vote ? undefined : vote;
+      return {
+        vote: nextVote,
+        reason: nextVote === 'dislike' ? prev.reason : undefined,
+      };
+    });
+    onToggleAiVote(message.id, vote);
+  };
+
+  const handleSelectAiReason = (reason: string) => {
+    setLocalAiFeedback((prev) => ({
+      ...prev,
+      vote: 'dislike',
+      reason,
+    }));
+    onSelectAiReason(message.id, reason);
+  };
 
   const pan = Gesture.Pan()
     .enabled(canReply)
@@ -91,19 +117,24 @@ function SwipeReplyMessageBase({
     });
 
   const longPress = Gesture.LongPress()
-    .minDuration(220)
+    .minDuration(200)
     .onStart(() => {
       runOnJS(onOpenReactionBar)();
     });
 
   const tap = Gesture.Tap()
+    .maxDuration(200)
     .onStart(() => {
       if (isReactionBarOpen) {
         runOnJS(onCloseReactionBar)();
       }
     });
 
-  const composedGesture = Gesture.Simultaneous(pan, longPress, tap);
+  // Use Race so that whichever gesture completes first takes priority
+  const composedGesture = Gesture.Race(
+    Gesture.Simultaneous(pan, longPress),
+    tap
+  );
 
   const animatedBubble = useAnimatedStyle(() => {
     return {
@@ -138,18 +169,25 @@ function SwipeReplyMessageBase({
   });
 
   return (
-    <View style={[styles.wrapper, isUser ? styles.rightAlign : styles.leftAlign]}>
+    <View
+      style={[
+        styles.wrapper,
+        isUser ? styles.rightAlign : styles.leftAlign,
+        reaction && styles.wrapperWithReaction,
+      ]}
+    >
       <Animated.View style={[styles.replyIconWrap, animatedReplyIcon]}>
         <Reply size={14} color="#ffffff" strokeWidth={2.25} />
       </Animated.View>
 
-      {isReactionBarOpen ? (
+      {isReactionBarOpen && (
         <Animated.View
           style={[
             styles.reactionBar,
             isUser ? styles.reactionBarRight : styles.reactionBarLeft,
             animatedReactionBar,
           ]}
+          pointerEvents="box-none"
         >
           {REACTION_EMOJIS.map((emoji) => (
             <Pressable
@@ -159,12 +197,13 @@ function SwipeReplyMessageBase({
                 onReact(message.id, emoji);
                 onCloseReactionBar();
               }}
+              android_ripple={{ color: 'rgba(0,0,0,0.1)' }}
             >
               <Text style={styles.reactionOptionText}>{emoji}</Text>
             </Pressable>
           ))}
         </Animated.View>
-      ) : null}
+      )}
 
       <GestureDetector gesture={composedGesture}>
         <Animated.View
@@ -205,16 +244,16 @@ function SwipeReplyMessageBase({
             <View style={styles.aiFeedbackWrap}>
               <View style={styles.aiVoteRow}>
                 <Pressable
-                  onPress={() => onToggleAiVote(message.id, 'like')}
+                  onPress={() => handleToggleAiVote('like')}
                   style={[
                     styles.aiVoteButton,
-                    aiFeedback?.vote === 'like' && styles.aiVoteButtonActive,
+                    localAiFeedback.vote === 'like' && styles.aiVoteButtonActive,
                   ]}
                 >
                   <Text
                     style={[
                       styles.aiVoteText,
-                      aiFeedback?.vote === 'like' && styles.aiVoteTextActive,
+                      localAiFeedback.vote === 'like' && styles.aiVoteTextActive,
                     ]}
                   >
                     Like
@@ -222,35 +261,40 @@ function SwipeReplyMessageBase({
                 </Pressable>
 
                 <Pressable
-                  onPress={() => onToggleAiVote(message.id, 'dislike')}
+                  onPress={() => handleToggleAiVote('dislike')}
                   style={[
                     styles.aiVoteButton,
-                    aiFeedback?.vote === 'dislike' && styles.aiVoteButtonDislike,
+                    localAiFeedback.vote === 'dislike' && styles.aiVoteButtonDislike,
                   ]}
                 >
                   <Text
                     style={[
                       styles.aiVoteText,
-                      aiFeedback?.vote === 'dislike' && styles.aiVoteTextDislike,
+                      localAiFeedback.vote === 'dislike' && styles.aiVoteTextDislike,
                     ]}
                   >
-                    Dislike
+                    {localAiFeedback.vote === 'dislike' && localAiFeedback.reason
+                      ? `Dislike (${localAiFeedback.reason})`
+                      : 'Dislike'}
                   </Text>
                 </Pressable>
               </View>
 
-              <Animated.View style={[styles.chipsWrap, animatedChipWrap]}>
+              <Animated.View
+                style={[styles.chipsWrap, animatedChipWrap]}
+                pointerEvents={localAiFeedback.vote === 'dislike' && !localAiFeedback.reason ? 'auto' : 'none'}
+              >
                 <View style={styles.chipsRow}>
                   {DISLIKE_CHIPS.map((chip) => (
                     <Pressable
                       key={`${message.id}-${chip}`}
-                      onPress={() => onSelectAiReason(message.id, chip)}
-                      style={[styles.chip, aiFeedback?.reason === chip && styles.chipActive]}
+                      onPress={() => handleSelectAiReason(chip)}
+                      style={[styles.chip, localAiFeedback.reason === chip && styles.chipActive]}
                     >
                       <Text
                         style={[
                           styles.chipText,
-                          aiFeedback?.reason === chip && styles.chipTextActive,
+                          localAiFeedback.reason === chip && styles.chipTextActive,
                         ]}
                       >
                         {chip}
@@ -262,7 +306,7 @@ function SwipeReplyMessageBase({
             </View>
           ) : null}
 
-          {reaction ? (
+          {reaction && reaction.trim() ? (
             <View style={styles.selectedReactionPill}>
               <Text style={styles.selectedReactionText}>{reaction}</Text>
             </View>
@@ -280,6 +324,9 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     position: 'relative',
     minHeight: 46,
+  },
+  wrapperWithReaction: {
+    marginBottom: 28,
   },
   leftAlign: {
     alignItems: 'flex-start',

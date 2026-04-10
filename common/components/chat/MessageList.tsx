@@ -1,10 +1,10 @@
 import { FlatList, StyleSheet } from 'react-native';
-import { CHAT_MESSAGES } from '../../data/chatMessages';
 import type { ChatMessage } from '../../types/chat';
 import type { AiFeedbackState } from '../../types/aiFeedback';
 import { SwipeReplyMessage } from './SwipeReplyMessage';
 
 type Props = {
+  messages: ChatMessage[];
   messageById: Map<string, ChatMessage>;
   reactions: Record<string, string>;
   aiFeedback: Record<string, AiFeedbackState>;
@@ -17,6 +17,7 @@ type Props = {
 };
 
 export function MessageList({
+  messages,
   messageById,
   reactions,
   aiFeedback,
@@ -29,7 +30,7 @@ export function MessageList({
 }: Props) {
   return (
     <FlatList
-      data={CHAT_MESSAGES}
+      data={messages}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
       keyboardShouldPersistTaps="handled"

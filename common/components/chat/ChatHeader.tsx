@@ -23,16 +23,12 @@ export function ChatHeader({ astrologerName, onEndChat }: Props) {
         <View style={styles.nameContainer}>
           <View style={styles.nameRow}>
             <Text style={styles.headerTitle}>{astrologerName}</Text>
-            <View style={styles.freeBadge}>
-              <Text style={styles.freeBadgeText}>FREE</Text>
-            </View>
           </View>
-          <Text style={styles.headerSubtitle}>0:44 • Live Session</Text>
         </View>
       </View>
       <View style={styles.headerRight}>
         <Pressable style={styles.endChatButton} onPress={onEndChat}>
-          <Text style={styles.endChatText}>End</Text>
+          <Text style={styles.endChatText}>End Chat</Text>
         </Pressable>
       </View>
     </View>

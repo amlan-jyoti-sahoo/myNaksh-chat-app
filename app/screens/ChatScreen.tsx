@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Alert,
   ImageBackground,
@@ -8,6 +8,7 @@ import {
   StyleSheet,
   UIManager,
 } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CHAT_MESSAGES } from '../../common/data/chatMessages';
 import { ChatComposer } from '../../common/components/chat/ChatComposer';
@@ -16,6 +17,17 @@ import { MessageList } from '../../common/components/chat/MessageList';
 import { SessionRatingOverlay } from '../../common/components/chat/SessionRatingOverlay';
 import type { AiFeedbackState } from '../../common/types/aiFeedback';
 import type { ChatMessage } from '../../common/types/chat';
+import {
+  initializeMessages,
+  addUserMessage,
+  updateDraft,
+  setReplyingTo,
+  setReaction,
+  setAiFeedback,
+  clearSession,
+} from '../../store/chatSlice';
+import type { RootState } from '../../store/store';
+import { useState } from 'react';
 
 type Props = {
   astrologerName: string;
@@ -25,13 +37,17 @@ type Props = {
 const BACKGROUND_IMAGE = require('../../common/assets/horoscope-background.png');
 
 export default function ChatScreen({ astrologerName, onSessionCompleted }: Props) {
-  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
-  const [draft, setDraft] = useState('');
-  const [reactions, setReactions] = useState<Record<string, string>>({});
-  const [aiFeedback, setAiFeedback] = useState<Record<string, AiFeedbackState>>({});
+  const dispatch = useDispatch();
   const [openReactionMessageId, setOpenReactionMessageId] = useState<string | null>(null);
   const [isRatingOverlayVisible, setIsRatingOverlayVisible] = useState(false);
   const [rating, setRating] = useState(0);
+
+  // Select from Redux store
+  const messages = useSelector((state: RootState) => state.chat.messages);
+  const draft = useSelector((state: RootState) => state.chat.draft);
+  const reactions = useSelector((state: RootState) => state.chat.reactions);
+  const aiFeedback = useSelector((state: RootState) => state.chat.aiFeedback);
+  const replyingTo = useSelector((state: RootState) => state.chat.replyingTo);
 
   useEffect(() => {
     if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -39,13 +55,20 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
     }
   }, []);
 
+  // Initialize messages from CHAT_MESSAGES data
+  useEffect(() => {
+    if (messages.length === 0) {
+      dispatch(initializeMessages(CHAT_MESSAGES));
+    }
+  }, [dispatch, messages.length]);
+
   const messageById = useMemo(() => {
     const map = new Map<string, ChatMessage>();
-    for (const message of CHAT_MESSAGES) {
+    for (const message of messages) {
       map.set(message.id, message);
     }
     return map;
-  }, []);
+  }, [messages]);
 
   return (
     <ImageBackground source={BACKGROUND_IMAGE} style={styles.background} resizeMode="cover">
@@ -53,12 +76,6 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
         <KeyboardAvoidingView
           style={styles.keyboardWrap}
           behavior={Platform.select({ ios: 'padding', android: undefined })}
-          onStartShouldSetResponderCapture={() => {
-            if (openReactionMessageId) {
-              setOpenReactionMessageId(null);
-            }
-            return false;
-          }}
         >
           <ChatHeader
             astrologerName={astrologerName}
@@ -69,42 +86,46 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
           />
 
           <MessageList
+            messages={messages}
             messageById={messageById}
             reactions={reactions}
             aiFeedback={aiFeedback}
             openReactionMessageId={openReactionMessageId}
             onOpenReaction={setOpenReactionMessageId}
-            onReply={setReplyingTo}
+            onReply={(message) => {
+              dispatch(setReplyingTo(message));
+            }}
             onReact={(messageId, emoji) => {
-              setReactions((prev) => ({
-                ...prev,
-                [messageId]: prev[messageId] === emoji ? '' : emoji,
-              }));
+              dispatch(setReaction({ messageId, emoji }));
               setOpenReactionMessageId(null);
             }}
             onToggleAiVote={(messageId, vote) => {
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-              setAiFeedback((prev) => {
-                const existing = prev[messageId] ?? {};
-                const nextVote = existing.vote === vote ? undefined : vote;
-                return {
-                  ...prev,
-                  [messageId]: {
-                    vote: nextVote,
-                    reason: nextVote === 'dislike' ? existing.reason : undefined,
-                  },
-                };
-              });
+              const existing = aiFeedback[messageId] ?? {};
+              const nextVote = existing.vote === vote ? undefined : vote;
+              dispatch(
+                setAiFeedback({
+                  messageId,
+                  feedback: nextVote
+                    ? {
+                        vote: nextVote,
+                        reason: nextVote === 'dislike' ? existing.reason : undefined,
+                      }
+                    : undefined,
+                })
+              );
             }}
             onSelectAiReason={(messageId, reason) => {
-              setAiFeedback((prev) => ({
-                ...prev,
-                [messageId]: {
-                  ...(prev[messageId] ?? {}),
-                  vote: 'dislike',
-                  reason,
-                },
-              }));
+              dispatch(
+                setAiFeedback({
+                  messageId,
+                  feedback: {
+                    ...(aiFeedback[messageId] ?? {}),
+                    vote: 'dislike',
+                    reason,
+                  },
+                })
+              );
             }}
           />
 
@@ -112,15 +133,30 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
             draft={draft}
             onDraftChange={(value) => {
               setOpenReactionMessageId(null);
-              setDraft(value);
+              dispatch(updateDraft(value));
             }}
             onInputFocus={() => setOpenReactionMessageId(null)}
             replyingToText={replyingTo?.text}
-            onCancelReply={() => setReplyingTo(null)}
+            onCancelReply={() => {
+              dispatch(setReplyingTo(null));
+            }}
             onSend={() => {
               if (draft.trim()) {
                 setOpenReactionMessageId(null);
-                setDraft('');
+                // Add new user message to Redux store
+                dispatch(
+                  addUserMessage({
+                    sender: 'user',
+                    text: draft,
+                    timestamp: Date.now(),
+                    type: 'text',
+                    replyTo: replyingTo?.id,
+                  })
+                );
+                // Clear reply state after sending
+                if (replyingTo) {
+                  dispatch(setReplyingTo(null));
+                }
               }
             }}
           />
@@ -141,11 +177,8 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setIsRatingOverlayVisible(false);
               setRating(0);
-              setReplyingTo(null);
-              setDraft('');
-              setReactions({});
-              setAiFeedback({});
               setOpenReactionMessageId(null);
+              dispatch(clearSession());
               onSessionCompleted();
             }}
           />
