@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
 import type { ChatMessage } from '../../types/chat';
 import type { AiFeedbackState } from '../../types/aiFeedback';
@@ -28,14 +29,30 @@ export function MessageList({
   onToggleAiVote,
   onSelectAiReason,
 }: Props) {
+  const listRef = useRef<FlatList<ChatMessage>>(null);
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      listRef.current?.scrollToEnd({ animated: true });
+    }, 0);
+
+    return () => clearTimeout(timeout);
+  }, [messages.length]);
+
   return (
     <FlatList
+      ref={listRef}
       data={messages}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.listContent}
       keyboardShouldPersistTaps="handled"
       scrollEnabled={!openReactionMessageId}
       onScrollBeginDrag={() => onOpenReaction(null)}
+      onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
       renderItem={({ item }) => {
         const replyMessage = item.replyTo ? messageById.get(item.replyTo) : undefined;
         const replyPreview = replyMessage?.text;

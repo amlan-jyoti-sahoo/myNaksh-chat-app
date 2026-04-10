@@ -24,7 +24,6 @@ import {
   setReplyingTo,
   setReaction,
   setAiFeedback,
-  clearSession,
 } from '../../store/chatSlice';
 import type { RootState } from '../../store/store';
 import { useState } from 'react';
@@ -178,7 +177,6 @@ export default function ChatScreen({ astrologerName, onSessionCompleted }: Props
               setIsRatingOverlayVisible(false);
               setRating(0);
               setOpenReactionMessageId(null);
-              dispatch(clearSession());
               onSessionCompleted();
             }}
           />
