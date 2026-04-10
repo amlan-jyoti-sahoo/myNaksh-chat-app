@@ -1,9 +1,8 @@
-
-
-https://github.com/user-attachments/assets/301c6a99-53ce-4306-a528-85259c70fa66
-
-
 # myNaksh
+https://github.com/user-attachments/assets/301c6a99-53ce-4306-a528-85259c70fa66
+![myNaksh-1](https://github.com/user-attachments/assets/7d0083c8-bc0b-47d3-a093-3f813bdb319b)
+
+![myNaksh-2](https://github.com/user-attachments/assets/65409149-d4a2-4136-a67d-aa7aa0caebac)
 
 Fresh Expo Router starter project.
 
